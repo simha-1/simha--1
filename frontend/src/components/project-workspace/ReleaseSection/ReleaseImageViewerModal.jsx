@@ -192,6 +192,7 @@ const ReleaseImageViewerModal = ({
         return;
       } else {
         // Start drawing a new text box
+        console.log('Starting text box drawing at:', x, y);
         setIsDrawingTextBox(true);
         setCurrentTextBox({ x, y, width: 0, height: 0, id: Date.now() });
         return;
@@ -216,13 +217,15 @@ const ReleaseImageViewerModal = ({
     
     if (isDrawingTextBox && currentTextBox) {
       // Update text box dimensions while dragging
-      setCurrentTextBox(prev => ({
-        ...prev,
-        width: Math.abs(x - prev.x),
-        height: Math.abs(y - prev.y),
-        x: Math.min(x, prev.x),
-        y: Math.min(y, prev.y)
-      }));
+      const newBox = {
+        ...currentTextBox,
+        width: Math.abs(x - currentTextBox.x),
+        height: Math.abs(y - currentTextBox.y),
+        x: Math.min(x, currentTextBox.x),
+        y: Math.min(y, currentTextBox.y)
+      };
+      console.log('Updating text box:', newBox);
+      setCurrentTextBox(newBox);
     } else if (isDrawing && drawingMode) {
       setCurrentPath(prev => [...prev, { x, y }]);
     } else if (isDragging && zoom > autoFitZoom) {
@@ -236,17 +239,20 @@ const ReleaseImageViewerModal = ({
   const handleMouseUp = () => {
     if (isDrawingTextBox && currentTextBox && currentTextBox.width > 1 && currentTextBox.height > 1) {
       // Complete text box drawing (only if box is big enough)
+      console.log('Completing text box:', currentTextBox);
       setTextBoxes(prev => [...prev, currentTextBox]);
       setCurrentTextBox(null);
       setIsDrawingTextBox(false);
       setHasDrawings(true);
-    } else if (isDrawing && currentPath.length > 0) {
+    } else if (isDrawing && currentPath.length > 0 && drawingMode) {
+      // Only add path if we're in drawing mode and have a valid path
       setDrawingPaths(prev => {
-        const newPaths = [...prev, currentPath];
-        setHasDrawings(true); // Set hasDrawings immediately when adding path
+        const newPaths = [...prev, [...currentPath]]; // Create a copy of the path
+        console.log('Adding drawing path:', currentPath, 'Total paths:', newPaths.length);
         return newPaths;
       });
       setCurrentPath([]);
+      setHasDrawings(true); // Set hasDrawings after adding path
     }
     setIsDrawing(false);
     setIsDrawingTextBox(false);
@@ -313,6 +319,7 @@ const ReleaseImageViewerModal = ({
 
   // Download functionality
   const downloadImageWithDrawings = async () => {
+    console.log('Download attempt - hasDrawings:', hasDrawings, 'drawingPaths:', drawingPaths.length, 'textBoxes:', textBoxes.length, 'textElements:', textElements.length);
     if (!hasDrawings || !imageRef.current) return;
     
     try {
@@ -837,6 +844,7 @@ const ReleaseImageViewerModal = ({
               })}
               
               {/* Drawing Paths */}
+              {console.log('RENDERING PATHS:', drawingPaths)}
               {drawingPaths.map((path, pathIndex) => {
                 if (path.length < 2) return null;
                 const pathData = path.map((point, index) => 
@@ -849,10 +857,10 @@ const ReleaseImageViewerModal = ({
                     d={pathData}
                     fill="none"
                     stroke="#ff4d4f"
-                    strokeWidth="0.8"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    opacity="0.9"
+                    opacity="1"
                   />
                 );
               })}
@@ -865,10 +873,10 @@ const ReleaseImageViewerModal = ({
                   ).join(' ')}
                   fill="none"
                   stroke="#ff4d4f"
-                  strokeWidth="0.8"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  opacity="0.7"
+                  opacity="0.8"
                 />
               )}
 
