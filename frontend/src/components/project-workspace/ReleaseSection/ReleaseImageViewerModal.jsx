@@ -890,9 +890,9 @@ const ReleaseImageViewerModal = ({
                   height={box.height}
                   fill="none"
                   stroke="#0066cc"
-                  strokeWidth="0.5"
-                  strokeDasharray="2,2"
-                  opacity="0.8"
+                  strokeWidth="2"
+                  strokeDasharray="4,4"
+                  opacity="1"
                 />
               ))}
 
@@ -905,9 +905,9 @@ const ReleaseImageViewerModal = ({
                   height={currentTextBox.height}
                   fill="none"
                   stroke="#0066cc"
-                  strokeWidth="0.5"
-                  strokeDasharray="2,2"
-                  opacity="0.8"
+                  strokeWidth="2"
+                  strokeDasharray="4,4"
+                  opacity="1"
                 />
               )}
 
