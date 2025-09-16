@@ -381,12 +381,18 @@ const ReleaseImageViewerModal = ({
                 
                 // Handle bounding box annotations
                 if (bbox && Array.isArray(bbox) && bbox.length >= 4) {
+                  // YOLO format: [center_x, center_y, width, height]
+                  const [center_x, center_y, width, height] = bbox;
+                  
+                  // Convert to corner format: [x, y, width, height]  
+                  const x = center_x - width/2;
+                  const y = center_y - height/2;
+                  
                   // Check if coordinates are normalized (0-1) or pixel values
-                  const [x, y, width, height] = bbox;
                   const imageWidth = window.modalImageWidth || 1;
                   const imageHeight = window.modalImageHeight || 1;
-                  console.log(`🔍 BBOX DEBUG: [${x}, ${y}, ${width}, ${height}], imageSize: ${imageWidth}x${imageHeight}`);
-                  const isNormalized = x <= 1 && y <= 1 && width <= 1 && height <= 1;
+                  console.log(`🔍 BBOX DEBUG: YOLO [${center_x}, ${center_y}, ${width}, ${height}] → Corner [${x}, ${y}, ${width}, ${height}], imageSize: ${imageWidth}x${imageHeight}`);
+                  const isNormalized = center_x <= 1 && center_y <= 1 && width <= 1 && height <= 1;
                   console.log(`🔍 BBOX isNormalized: ${isNormalized}`);
                   
                   let rectX, rectY, rectWidth, rectHeight;
