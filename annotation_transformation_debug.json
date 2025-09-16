@@ -1,0 +1,78 @@
+{
+  "transformation_method": "sequential",
+  "transformation_config": {
+    "resize": {
+      "enabled": true,
+      "width": 640,
+      "height": 480,
+      "resize_mode": "stretch_to"
+    }
+  },
+  "original_dims": [
+    1024,
+    768
+  ],
+  "new_dims": [
+    640,
+    480
+  ],
+  "annotation_steps": [
+    {
+      "annotation_id": 0,
+      "annotation_type": "BoundingBox",
+      "class_name": "car",
+      "class_id": 1,
+      "transformation_method": "sequential",
+      "transformation_steps": [
+        {
+          "step": 0,
+          "transformation": "resize",
+          "parameters": {
+            "enabled": true,
+            "width": 640,
+            "height": 480,
+            "resize_mode": "stretch_to"
+          },
+          "coordinates_before": {
+            "x_min": 100.0,
+            "y_min": 50.0,
+            "x_max": 200.0,
+            "y_max": 150.0
+          },
+          "coordinates_after": {
+            "x_min": 62.5,
+            "y_min": 31.25,
+            "x_max": 125.0,
+            "y_max": 93.75
+          },
+          "coordinate_changes": {
+            "x_min_change": -37.5,
+            "y_min_change": -18.75,
+            "x_max_change": -75.0,
+            "y_max_change": -56.25,
+            "center_x_change": -56.25,
+            "center_y_change": -37.5
+          },
+          "current_image_size": [
+            640,
+            480
+          ]
+        }
+      ],
+      "original_coordinates": {
+        "type": "bbox",
+        "x_min": 100.0,
+        "y_min": 50.0,
+        "x_max": 200.0,
+        "y_max": 150.0
+      },
+      "final_coordinates": {
+        "type": "bbox",
+        "x_min": 62.5,
+        "y_min": 31.25,
+        "x_max": 125.0,
+        "y_max": 93.75
+      }
+    }
+  ]
+}
