@@ -234,20 +234,19 @@ const ReleaseImageViewerModal = ({
   };
 
   const handleMouseUp = () => {
-    if (isDrawingTextBox && currentTextBox && currentTextBox.width > 2 && currentTextBox.height > 2) {
+    if (isDrawingTextBox && currentTextBox && currentTextBox.width > 1 && currentTextBox.height > 1) {
       // Complete text box drawing (only if box is big enough)
       setTextBoxes(prev => [...prev, currentTextBox]);
       setCurrentTextBox(null);
       setIsDrawingTextBox(false);
       setHasDrawings(true);
-    } else if (isDrawing && currentPath.length > 1) {
+    } else if (isDrawing && currentPath.length > 0) {
       setDrawingPaths(prev => {
         const newPaths = [...prev, currentPath];
+        setHasDrawings(true); // Set hasDrawings immediately when adding path
         return newPaths;
       });
       setCurrentPath([]);
-      // Set hasDrawings immediately after adding a drawing
-      setHasDrawings(true);
     }
     setIsDrawing(false);
     setIsDrawingTextBox(false);
