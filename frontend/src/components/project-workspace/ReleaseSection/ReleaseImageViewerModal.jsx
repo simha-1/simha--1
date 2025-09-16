@@ -569,7 +569,7 @@ const ReleaseImageViewerModal = ({
             overflow: 'hidden',
             position: 'relative',
             background: '#1a2332',
-            cursor: textMode ? 'text' : (drawingMode ? 'crosshair' : (zoom > autoFitZoom ? (isDragging ? 'grabbing' : 'grab') : 'default')),
+            cursor: textMode ? 'crosshair' : (drawingMode ? 'crosshair' : (zoom > autoFitZoom ? (isDragging ? 'grabbing' : 'grab') : 'default')),
             margin: '20px',
             borderRadius: '12px',
             boxShadow: 'inset 0 0 20px rgba(0,0,0,0.3)'
