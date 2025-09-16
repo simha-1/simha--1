@@ -164,6 +164,8 @@ const ReleaseImageViewerModal = ({
   }, []);
 
   const handleMouseDown = (e) => {
+    if (!svgRef.current) return; // Guard against null ref
+    
     const rect = svgRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -206,6 +208,8 @@ const ReleaseImageViewerModal = ({
   };
 
   const handleMouseMove = (e) => {
+    if (!svgRef.current) return; // Guard against null ref
+    
     const rect = svgRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
