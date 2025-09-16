@@ -396,7 +396,6 @@ const ReleaseImageViewerModal = ({
     setIsDrawing(false);
     setPan({ x: 0, y: 0 });
     setImageLoaded(false);
-    setNotes(''); // Clear notes when changing images
   }, [currentIndex]);
 
   // Auto-fit when image loads
