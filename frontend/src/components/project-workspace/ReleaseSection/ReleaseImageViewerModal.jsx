@@ -256,6 +256,7 @@ const ReleaseImageViewerModal = ({
   // Drawing controls
   const toggleDrawingMode = () => {
     setDrawingMode(!drawingMode);
+    if (!drawingMode) setTextMode(false); // Disable text mode when enabling drawing mode
     if (drawingMode) {
       setIsDrawing(false);
       setCurrentPath([]);
@@ -317,7 +318,17 @@ const ReleaseImageViewerModal = ({
     try {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const img = imageRef.current;
+      const originalImg = imageRef.current;
+      
+      // Create a new image with CORS enabled to avoid tainted canvas
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = originalImg.src;
+      });
       
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
@@ -602,6 +613,7 @@ const ReleaseImageViewerModal = ({
             ref={imageRef}
             src={fullImageUrl}
             alt={currentImage.filename}
+            crossOrigin="anonymous"
             style={{
               width: 'auto',
               height: 'auto',
@@ -1072,7 +1084,10 @@ const ReleaseImageViewerModal = ({
 
               <Button
                 type={textMode ? "primary" : "default"}
-                onClick={() => setTextMode(!textMode)}
+                onClick={() => {
+                  setTextMode(!textMode);
+                  if (!textMode) setDrawingMode(false); // Disable drawing mode when enabling text mode
+                }}
                 style={{ 
                   width: '100%',
                   background: textMode ? '#e74c3c' : undefined,
