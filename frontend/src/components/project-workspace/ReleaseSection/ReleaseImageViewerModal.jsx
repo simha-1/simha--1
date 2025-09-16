@@ -46,8 +46,11 @@ const ReleaseImageViewerModal = ({
   const [currentPath, setCurrentPath] = useState([]);
   const [hasDrawings, setHasDrawings] = useState(false);
   const [textMode, setTextMode] = useState(false);
+  const [textBoxes, setTextBoxes] = useState([]); // Rectangle boxes for text
   const [textElements, setTextElements] = useState([]);
   const [activeTextInput, setActiveTextInput] = useState(null);
+  const [isDrawingTextBox, setIsDrawingTextBox] = useState(false);
+  const [currentTextBox, setCurrentTextBox] = useState(null);
   
   // Refs
   const imageRef = useRef(null);
@@ -161,29 +164,40 @@ const ReleaseImageViewerModal = ({
   }, []);
 
   const handleMouseDown = (e) => {
+    const rect = svgRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
     if (textMode) {
-      const rect = svgRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      // Check if clicking inside an existing text box to add text
+      const clickedTextBox = textBoxes.find(box => 
+        x >= box.x && x <= box.x + box.width &&
+        y >= box.y && y <= box.y + box.height
+      );
       
-      // Create a new text input at the clicked position
-      const newTextInput = {
-        id: Date.now(),
-        x: x,
-        y: y,
-        text: '',
-        fontSize: 3,
-        color: '#ff0000'
-      };
-      setActiveTextInput(newTextInput);
-      return;
+      if (clickedTextBox) {
+        // Click inside existing text box - create text input
+        const newTextInput = {
+          id: Date.now(),
+          x: clickedTextBox.x + 1, // Slightly inside the box
+          y: clickedTextBox.y + 1,
+          text: '',
+          fontSize: 3,
+          color: '#ff0000',
+          boxId: clickedTextBox.id
+        };
+        setActiveTextInput(newTextInput);
+        return;
+      } else {
+        // Start drawing a new text box
+        setIsDrawingTextBox(true);
+        setCurrentTextBox({ x, y, width: 0, height: 0, id: Date.now() });
+        return;
+      }
     }
     
     if (drawingMode) {
       setIsDrawing(true);
-      const rect = svgRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
       setCurrentPath([{ x, y }]);
     } else if (zoom > autoFitZoom) {
       setIsDragging(true);
@@ -192,10 +206,20 @@ const ReleaseImageViewerModal = ({
   };
 
   const handleMouseMove = (e) => {
-    if (isDrawing && drawingMode) {
-      const rect = svgRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const rect = svgRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    if (isDrawingTextBox && currentTextBox) {
+      // Update text box dimensions while dragging
+      setCurrentTextBox(prev => ({
+        ...prev,
+        width: Math.abs(x - prev.x),
+        height: Math.abs(y - prev.y),
+        x: Math.min(x, prev.x),
+        y: Math.min(y, prev.y)
+      }));
+    } else if (isDrawing && drawingMode) {
       setCurrentPath(prev => [...prev, { x, y }]);
     } else if (isDragging && zoom > autoFitZoom) {
       setPan({
@@ -206,15 +230,23 @@ const ReleaseImageViewerModal = ({
   };
 
   const handleMouseUp = () => {
-    if (isDrawing && currentPath.length > 1) {
+    if (isDrawingTextBox && currentTextBox && currentTextBox.width > 2 && currentTextBox.height > 2) {
+      // Complete text box drawing (only if box is big enough)
+      setTextBoxes(prev => [...prev, currentTextBox]);
+      setCurrentTextBox(null);
+      setIsDrawingTextBox(false);
+      setHasDrawings(true);
+    } else if (isDrawing && currentPath.length > 1) {
       setDrawingPaths(prev => {
         const newPaths = [...prev, currentPath];
-        setHasDrawings(newPaths.length > 0 || textElements.length > 0);
         return newPaths;
       });
       setCurrentPath([]);
+      // Set hasDrawings immediately after adding a drawing
+      setHasDrawings(true);
     }
     setIsDrawing(false);
+    setIsDrawingTextBox(false);
     setIsDragging(false);
   };
 
@@ -230,21 +262,30 @@ const ReleaseImageViewerModal = ({
   const clearDrawings = () => {
     setDrawingPaths([]);
     setCurrentPath([]);
+    setTextBoxes([]);
     setTextElements([]);
     setHasDrawings(false);
   };
 
   const undoLastDrawing = () => {
-    if (drawingPaths.length > 0) {
-      const newPaths = [...drawingPaths];
-      newPaths.pop();
-      setDrawingPaths(newPaths);
-      setHasDrawings(newPaths.length > 0 || textElements.length > 0);
-    } else if (textElements.length > 0) {
+    if (textElements.length > 0) {
+      // Undo text first (most recent action)
       const newTexts = [...textElements];
       newTexts.pop();
       setTextElements(newTexts);
-      setHasDrawings(drawingPaths.length > 0 || newTexts.length > 0);
+      setHasDrawings(drawingPaths.length > 0 || textBoxes.length > 0 || newTexts.length > 0);
+    } else if (textBoxes.length > 0) {
+      // Undo text box
+      const newBoxes = [...textBoxes];
+      newBoxes.pop();
+      setTextBoxes(newBoxes);
+      setHasDrawings(drawingPaths.length > 0 || newBoxes.length > 0 || textElements.length > 0);
+    } else if (drawingPaths.length > 0) {
+      // Undo drawing path
+      const newPaths = [...drawingPaths];
+      newPaths.pop();
+      setDrawingPaths(newPaths);
+      setHasDrawings(newPaths.length > 0 || textBoxes.length > 0 || textElements.length > 0);
     }
   };
 
@@ -254,11 +295,8 @@ const ReleaseImageViewerModal = ({
         ...activeTextInput,
         text: text.trim()
       };
-      setTextElements(prev => {
-        const newTexts = [...prev, newTextElement];
-        setHasDrawings(drawingPaths.length > 0 || newTexts.length > 0);
-        return newTexts;
-      });
+      setTextElements(prev => [...prev, newTextElement]);
+      setHasDrawings(true);
     }
     setActiveTextInput(null);
   };
@@ -304,6 +342,17 @@ const ReleaseImageViewerModal = ({
           });
           ctx.stroke();
         }
+      });
+
+      // Draw text boxes
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 2;
+      textBoxes.forEach(box => {
+        const x = (box.x / 100) * canvas.width;
+        const y = (box.y / 100) * canvas.height;
+        const width = (box.width / 100) * canvas.width;
+        const height = (box.height / 100) * canvas.height;
+        ctx.strokeRect(x, y, width, height);
       });
 
       // Draw text elements
@@ -805,6 +854,37 @@ const ReleaseImageViewerModal = ({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity="0.7"
+                />
+              )}
+
+              {/* Text boxes */}
+              {textBoxes.map((box) => (
+                <rect
+                  key={box.id}
+                  x={box.x}
+                  y={box.y}
+                  width={box.width}
+                  height={box.height}
+                  fill="none"
+                  stroke="#0066cc"
+                  strokeWidth="0.5"
+                  strokeDasharray="2,2"
+                  opacity="0.8"
+                />
+              ))}
+
+              {/* Current text box being drawn */}
+              {currentTextBox && (
+                <rect
+                  x={currentTextBox.x}
+                  y={currentTextBox.y}
+                  width={currentTextBox.width}
+                  height={currentTextBox.height}
+                  fill="none"
+                  stroke="#0066cc"
+                  strokeWidth="0.5"
+                  strokeDasharray="2,2"
+                  opacity="0.8"
                 />
               )}
 
