@@ -48,6 +48,26 @@ const ReleaseDetailsView = ({
   projectId 
 }) => {
   const [releaseImages, setReleaseImages] = useState([]);
+
+  // Helper function to convert YOLO format to corner format and percentages
+  const convertYoloBbox = (bbox) => {
+    if (!bbox || !Array.isArray(bbox) || bbox.length < 4) return null;
+    
+    // YOLO format: [center_x, center_y, width, height]
+    const [center_x, center_y, width, height] = bbox;
+    
+    // Convert to corner format: [x, y, width, height]  
+    const x = center_x - width/2;
+    const y = center_y - height/2;
+    
+    // Convert to percentages
+    return {
+      x: x * 100,
+      y: y * 100,
+      width: width * 100,
+      height: height * 100
+    };
+  };
   const [loading, setLoading] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(release?.name || '');
@@ -501,28 +521,24 @@ useEffect(() => {
                     }
                     
                     // Handle bounding box annotations
-                    if (bbox && Array.isArray(bbox) && bbox.length >= 4) {
-                      const [x, y, width, height] = bbox;
-                      const rectX = x * 100;
-                      const rectY = y * 100;
-                      const rectWidth = width * 100;
-                      const rectHeight = height * 100;
+                    const bboxCoords = convertYoloBbox(bbox);
+                    if (bboxCoords) {
                       
                       return (
                         <g key={annIndex}>
                           <rect
-                            x={rectX}
-                            y={rectY}
-                            width={rectWidth}
-                            height={rectHeight}
+                            x={bboxCoords.x}
+                            y={bboxCoords.y}
+                            width={bboxCoords.width}
+                            height={bboxCoords.height}
                             fill="none"
                             stroke={color}
                             strokeWidth="0.5"
                             opacity="0.8"
                           />
                           <text
-                            x={rectX}
-                            y={rectY - 1}
+                            x={bboxCoords.x}
+                            y={bboxCoords.y - 1}
                             fill={color}
                             fontSize="3"
                             fontWeight="bold"
@@ -1320,22 +1336,17 @@ useEffect(() => {
                                          );
                                        }
                                        
-                                       // Handle bounding box annotations (your bbox format)
-                                       if (bbox && Array.isArray(bbox) && bbox.length >= 4) {
-                                         // Convert bbox coordinates to percentages
-                                         const [x, y, width, height] = bbox;
-                                         const rectX = x * 100; // Already normalized coordinates
-                                         const rectY = y * 100;
-                                         const rectWidth = width * 100;
-                                         const rectHeight = height * 100;
+                                       // Handle bounding box annotations
+                                       const bboxCoords = convertYoloBbox(bbox);
+                                       if (bboxCoords) {
                                          
                                          return (
                                            <g key={annIndex}>
                                              <rect
-                                               x={rectX}
-                                               y={rectY}
-                                               width={rectWidth}
-                                               height={rectHeight}
+                                               x={bboxCoords.x}
+                                               y={bboxCoords.y}
+                                               width={bboxCoords.width}
+                                               height={bboxCoords.height}
                                                fill={color}
                                                fillOpacity="0.1"
                                                stroke={color}
@@ -1343,8 +1354,8 @@ useEffect(() => {
                                                opacity="0.8"
                                              />
                                              <text
-                                               x={rectX + 1}
-                                               y={rectY - 1}
+                                               x={bboxCoords.x + 1}
+                                               y={bboxCoords.y - 1}
                                                fill={color}
                                                fontSize="2"
                                                fontWeight="bold"
